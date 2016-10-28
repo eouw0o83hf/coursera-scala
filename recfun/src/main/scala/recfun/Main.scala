@@ -21,7 +21,23 @@ object Main {
   /**
    * Exercise 2
    */
-    def balance(chars: List[Char]): Boolean =
+    def balance(chars: List[Char]): Boolean = {
+        def balanceCore(chars: List[Char], lefts: Int): Boolean = {
+          if(chars.isEmpty) lefts == 0
+          else {
+            val balance = chars.head match {
+              case '(' => lefts + 1
+              case ')' => lefts - 1
+              case default => lefts
+            }
+            if(balance < 0) false
+            else balanceCore(chars.tail, balance)
+          }
+        }
+        balanceCore(chars, 0)
+      }
+      
+    def balance_iterative(chars: List[Char]): Boolean =
       chars.foldLeft(0)((z, i) => 
         if(z < 0) z
         else if(i == '(') z + 1
@@ -34,10 +50,14 @@ object Main {
    * Exercise 3
    */
     def countChange(money: Int, coins: List[Int]): Int = {
-      if(coins.isEmpty) 0
-      if(money == coins.head) 1
-      else if(money < coins.head) countChange(money, coins.tail)
-      else if(money > coins.head) countChange(money - coins.head, coins)
-      else -111111111
+      if(coins.isEmpty || money == 0) 0
+      else {
+        val headCount =
+          if(money == coins.head) 1
+          else if(money > coins.head) countChange(money - coins.head, coins)
+          else 0
+        
+        headCount + countChange(money, coins.tail)
+      }
     }
   }
