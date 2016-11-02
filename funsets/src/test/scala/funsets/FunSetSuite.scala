@@ -81,6 +81,9 @@ class FunSetSuite extends FunSuite {
     
     val between0and10 = (a: Int) => a > 0 && a < 10
     val anyValidInt = (a: Int) => true
+    
+    val mapThing = (a: Int) => a == 1 || a == 3 || a == 4 || a == 5 || a == 7 || a == 1000
+    val mapXform = (a: Int) => a + 1
   }
 
   /**
@@ -140,6 +143,17 @@ class FunSetSuite extends FunSuite {
       
       val oneMillionSets = exists(anyValidInt, s4)
       assert(!oneMillionSets, "One million sets")
+    }
+  }
+  
+  test("map i guess?") {
+    new TestSets {
+      /*
+[Test Description] map: {1,3,4,5,7,1000}
+[Observed Error] "{[2,4,5,6,8]}" did not equal "{[0,2,3,4,6,999]}"
+[Lost Points] 10
+       */
+      val mapped = map(mapThing, mapXform)
     }
   }
 

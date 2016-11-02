@@ -38,7 +38,7 @@ object FunSets {
    * Returns the difference of the two given sets,
    * the set of all elements of `s` that are not in `t`.
    */
-    def diff(s: Set, t: Set): Set = a => s(a) ^ t(a)
+    def diff(s: Set, t: Set): Set = a => s(a) && !t(a)
   
   /**
    * Returns the subset of `s` for which `p` holds.
@@ -73,7 +73,7 @@ object FunSets {
    * Returns a set transformed by applying `f` to each element of `s`.
    */
     def map(s: Set, f: Int => Int): Set = a => s(f(a))
-  
+    
   /**
    * Displays the contents of a set
    */
