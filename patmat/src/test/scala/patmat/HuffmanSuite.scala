@@ -28,6 +28,11 @@ class HuffmanSuite extends FunSuite {
     }
   }
 
+  test("secret") {
+    new TestTrees {
+      assert(decodedSecret.mkString == "huffmanestcoo")
+    }
+  }
 
   test("string2chars(\"hello, world\")") {
     assert(string2Chars("hello, world") === List('h', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd'))
