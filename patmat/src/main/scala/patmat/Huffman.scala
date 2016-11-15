@@ -189,16 +189,20 @@ object Huffman {
    */
     def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
       def decodeAcc(localTree: CodeTree, bits: List[Bit], acc: List[Char]): List[Char] = {
-        if(bits.isEmpty) acc
-        else {
+        //if(bits.isEmpty) acc
+        //else {
           localTree match {
             case f: Fork => {
               val subTree = if(bits.head == 1) f.right else f.left
               decodeAcc(subTree, bits.tail, acc)
             }
-            case l: Leaf => decodeAcc(tree, bits, acc ::: List(l.char))
+            case l: Leaf => {
+              val updatedAcc = acc ::: List(l.char)
+              if(bits.isEmpty) updatedAcc
+              else decodeAcc(tree, bits, updatedAcc)
+            }
           }
-        }
+        //}
       }
       decodeAcc(tree, bits, Nil)
     }
