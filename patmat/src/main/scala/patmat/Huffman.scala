@@ -319,7 +319,10 @@ object Huffman {
    * This function returns the bit sequence that represents the character `char` in
    * the code table `table`.
    */
-    def codeBits(table: CodeTable)(char: Char): List[Bit] = ???
+    def codeBits(table: CodeTable)(char: Char): List[Bit] = {
+      if(table.head._1 == char) table.head._2
+      else codeBits(table.tail)(char)
+    }
   
   /**
    * Given a code tree, create a code table which contains, for every character in the
@@ -329,14 +332,22 @@ object Huffman {
    * a valid code tree that can be represented as a code table. Using the code tables of the
    * sub-trees, think of how to build the code table for the entire tree.
    */
-    def convert(tree: CodeTree): CodeTable = ???
+    def convert(tree: CodeTree): CodeTable = {
+      def convertAcc(subTree: CodeTree, path: List[Bit]): CodeTable = {
+        subTree match {
+          case f: Fork => convertAcc(f.left, path ::: List(0)) ::: convertAcc(f.right, path ::: List(1))
+          case l: Leaf => List((l.char, path))
+        }
+      }
+      convertAcc(tree, Nil)
+    }
   
   /**
    * This function takes two code tables and merges them into one. Depending on how you
    * use it in the `convert` method above, this merge method might also do some transformations
    * on the two parameter code tables.
    */
-    def mergeCodeTables(a: CodeTable, b: CodeTable): CodeTable = ???
+    def mergeCodeTables(a: CodeTable, b: CodeTable): CodeTable = a ::: b
   
   /**
    * This function encodes `text` according to the code tree `tree`.
@@ -344,5 +355,14 @@ object Huffman {
    * To speed up the encoding process, it first converts the code tree to a code table
    * and then uses it to perform the actual encoding.
    */
-    def quickEncode(tree: CodeTree)(text: List[Char]): List[Bit] = ???
+    def quickEncode(tree: CodeTree)(text: List[Char]): List[Bit] = {
+      def encodeAcc(table: CodeTable, text: List[Char], acc: List[Bit]): List[Bit] = {
+        if(text.isEmpty) acc
+        else {
+          val code = table.find(_._1 == text.head).head._2
+          encodeAcc(table, text.tail, acc ::: code)
+        }
+      }
+      encodeAcc(convert(tree), text, Nil)  
+    }
   }
