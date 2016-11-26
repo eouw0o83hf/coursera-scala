@@ -1,5 +1,7 @@
 package forcomp
 
+import com.sun.org.apache.xerces.internal.impl.xs.models.XSDFACM.Occurence
+
 
 object Anagrams {
 
@@ -96,11 +98,11 @@ object Anagrams {
     }
 
   /** Returns all the anagrams of a given word. */
-  def wordAnagrams(word: Word): List[Word] = {
-    val occurrences = wordOccurrences(word)
-    dictionaryByOccurrences.find(a => occurrencesMatch(a._1, occurrences)).getOrElse(null)._2
-  }
+  def wordAnagrams(word: Word): List[Word] = wordAnagrams(wordOccurrences(word))
 
+  def wordAnagrams(occurrences: Occurrences): List[Word] =
+    dictionaryByOccurrences.find(a => occurrencesMatch(a._1, occurrences)).getOrElse(null)._2
+  
   /** Returns the list of all subsets of the occurrence list.
    *  This includes the occurrence itself, i.e. `List(('k', 1), ('o', 1))`
    *  is a subset of `List(('k', 1), ('o', 1))`.
@@ -203,5 +205,42 @@ object Anagrams {
    *
    *  Note: There is only one anagram of an empty sentence.
    */
-  def sentenceAnagrams(sentence: Sentence): List[Sentence] = ???
+  def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
+    if(sentence.isEmpty) List(Nil)
+    else {
+      val allOccurrences = sentenceOccurrences(sentence)
+      val occurrenceSets = manySubOccurrences(allOccurrences)
+      occurrenceSets.foldLeft(List[Sentence]())((a, i) => {
+        a ::: allSentences(i, Nil)
+      })
+    }
+  }
+  
+  def manySubOccurrences(occurrences: Occurrences): List[List[Occurrences]] = {
+    def subOccurrencesWithPath(occurrences: Occurrences, path: List[Occurrences]): List[List[Occurrences]] = {
+      if(occurrences.isEmpty) List(path)
+      else {
+        val subsets = combinations(occurrences)
+        subsets.foldLeft(List[List[Occurrences]]())((a, i) => {
+          if(!dictionaryByOccurrences.contains(i)) a
+          else {
+            val newPath = path ::: List(i)
+            val remainingOccurrences = subtract(occurrences, i)
+            a ::: subOccurrencesWithPath(remainingOccurrences, newPath)
+          }
+        })
+      }
+    }
+    subOccurrencesWithPath(occurrences, Nil)
+  }  
+  
+  def allSentences(occurrences: List[Occurrences], path: Sentence): List[Sentence] = {
+    if(occurrences.isEmpty) List(path)
+    else {
+      val possibleWords = wordAnagrams(occurrences.head)
+      possibleWords.foldLeft(List[Sentence]())((a, i) => {
+        a ::: allSentences(occurrences.tail, path ::: List(i))
+      })
+    }
+  }
 }
