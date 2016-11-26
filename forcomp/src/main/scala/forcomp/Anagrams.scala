@@ -34,10 +34,33 @@ object Anagrams {
    *
    *  Note: you must use `groupBy` to implement this method!
    */
-  def wordOccurrences(w: Word): Occurrences = ???
+  def wordOccurrences(w: Word): Occurrences = w.toList.filter(_.isLetter).groupBy(_.toLower).mapValues(_.size).toList.sortBy(_._1)
 
   /** Converts a sentence into its character occurrence list. */
-  def sentenceOccurrences(s: Sentence): Occurrences = ???
+  def sentenceOccurrences(s: Sentence): Occurrences = {
+    def mergeAdjacent(input: List[(Char, Int)]): List[(Char, Int)] = {
+      if(input.isEmpty) input
+      else {
+        val head = input.head
+        val tail = input.tail
+        
+        if(tail.isEmpty) List(head)
+        else if(head._1 == tail.head._1) {
+          List((head._1, head._2 + tail.head._2)) ::: mergeAdjacent(tail.tail)
+        } else {
+          List(head) ::: mergeAdjacent(tail)
+        }
+      }
+    }
+    val allOccurrences = s.foldLeft(List[(Char, Int)]())((a, i) => a ::: wordOccurrences(i)).sortBy(_._1)
+    mergeAdjacent(allOccurrences)
+  }
+
+  def occurrencesToString(o: Occurrences): String = {
+    o.foldLeft("")((a, i) => {
+      a + i._1.toString() + i._2.toString()
+    })
+  }
 
   /** The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
    *  the words that have that occurrence count.
@@ -54,10 +77,29 @@ object Anagrams {
    *    List(('a', 1), ('e', 1), ('t', 1)) -> Seq("ate", "eat", "tea")
    *
    */
-  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = ???
+  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = {
+    val allWords = dictionary.foldLeft(List[(Word, Occurrences)]())((a, i) => a ::: List((i, wordOccurrences(i))))
+    val groupings = allWords.groupBy(a => occurrencesToString(a._2))
+    groupings.foldLeft(List[(Occurrences, List[Word])]())((a, i) => {
+      val words = i._2.map(b => (b._1))
+      val occurrences = i._2.head._2
+      a ::: List((i._2.head._2, i._2.map(b => (b._1))))
+    }).toMap
+  }
+  
+  def occurrencesMatch(left: Occurrences, right: Occurrences): Boolean = {
+      if(left.length != right.length) false
+      else if(left.isEmpty && right.isEmpty) true
+      else if(left.head._1 != right.head._1) false
+      else if(left.head._2 != right.head._2) false
+      else occurrencesMatch(left.tail, right.tail)
+    }
 
   /** Returns all the anagrams of a given word. */
-  def wordAnagrams(word: Word): List[Word] = ???
+  def wordAnagrams(word: Word): List[Word] = {
+    val occurrences = wordOccurrences(word)
+    dictionaryByOccurrences.find(a => occurrencesMatch(a._1, occurrences)).getOrElse(null)._2
+  }
 
   /** Returns the list of all subsets of the occurrence list.
    *  This includes the occurrence itself, i.e. `List(('k', 1), ('o', 1))`
@@ -81,7 +123,18 @@ object Anagrams {
    *  Note that the order of the occurrence list subsets does not matter -- the subsets
    *  in the example above could have been displayed in some other order.
    */
-  def combinations(occurrences: Occurrences): List[Occurrences] = ???
+  def combinations(occurrences: Occurrences): List[Occurrences] = {
+    def combinationsCore(o: Occurrences, path: Occurrences): List[Occurrences] = {
+      if(o.isEmpty) List(path)
+      else {
+        List.tabulate(o.head._2 + 1)((a: Int) => {
+          val head = if(a == 0) Nil else List((o.head._1, a))          
+          combinationsCore(o.tail, path ::: head)
+        }).flatten
+      }
+    }
+    combinationsCore(occurrences, Nil)
+  }
 
   /** Subtracts occurrence list `y` from occurrence list `x`.
    *
@@ -93,7 +146,22 @@ object Anagrams {
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
+  def subtract(x: Occurrences, y: Occurrences): Occurrences = {
+    if(x.isEmpty) Nil
+    else if(y.isEmpty) x
+    else {
+      val yMap = y.toMap
+      val currentHead = {
+        if(!yMap.contains(x.head._1)) List(x.head)
+        else {
+          val remainder = x.head._2 - yMap(x.head._1)
+          if(remainder <= 0) Nil
+          else List((x.head._1, remainder))
+        }
+      }
+      currentHead ::: subtract(x.tail, y)
+    }
+  }
 
   /** Returns a list of all anagram sentences of the given sentence.
    *
